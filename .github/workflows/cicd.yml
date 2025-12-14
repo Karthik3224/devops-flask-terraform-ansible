@@ -49,18 +49,18 @@ jobs:
       #############################
       # 4. Setup Terraform
       #############################
-        - name: Setup Terraform
-          uses: hashicorp/setup-terraform@v3
-          with:
-              terraform_version: latest
-  
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
 
       #############################
       # 5. Terraform Init
       #############################
       - name: Terraform Init
         working-directory: terraform
-        run: terraform init \
+        run: |
+          terraform init \
             -backend-config="bucket=devops-tfstate-bucket-karthik" \
             -backend-config="key=ec2-project/terraform.tfstate" \
             -backend-config="region=ap-south-1"
