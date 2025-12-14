@@ -49,10 +49,11 @@ jobs:
       #############################
       # 4. Setup Terraform
       #############################
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.7.7  # match your local Terraform version
+        - name: Setup Terraform
+          uses: hashicorp/setup-terraform@v3
+          with:
+              terraform_version: latest
+  
 
       #############################
       # 5. Terraform Init
