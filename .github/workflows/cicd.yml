@@ -31,8 +31,8 @@ jobs:
       #############################
       - name: Create S3 bucket for Terraform state
         run: |
-          BUCKET="devops-tfstate-bucket-manikanta"
-          REGION="ap-southeast-1"
+          BUCKET="devops-tfstate-bucket-karthik"
+          REGION="ap-south-1"
 
           if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
             echo "Bucket exists, skipping."
