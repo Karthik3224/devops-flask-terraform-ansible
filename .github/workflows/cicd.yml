@@ -27,13 +27,12 @@ jobs:
           aws-region: ap-south-1
 
       #############################
-      # 3. Create S3 bucket if not exists
+      # 3. Create S3 bucket for Terraform state if not exists
       #############################
       - name: Create S3 bucket for Terraform state
         run: |
           BUCKET="devops-tfstate-bucket-karthik"
           REGION="ap-south-1"
-
           if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
             echo "Bucket exists, skipping."
           else
@@ -52,33 +51,34 @@ jobs:
       #############################
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.7  # match your local Terraform version
 
       #############################
       # 5. Terraform Init
       #############################
       - name: Terraform Init
         working-directory: terraform
-        run: terraform init
+        run: terraform init \
+            -backend-config="bucket=devops-tfstate-bucket-karthik" \
+            -backend-config="key=ec2-project/terraform.tfstate" \
+            -backend-config="region=ap-south-1"
 
       #############################
-      # 6. Terraform Plan
+      # 6. Remove old EC2 from state (optional)
       #############################
-      - name: Terraform Plan
+      - name: Remove old EC2 from state
         working-directory: terraform
-        run: terraform plan
+        run: terraform state rm aws_instance.web_server || echo "No old instance in state"
 
       #############################
-      # 7. Terraform Apply
+      # 7. Terraform Plan & Apply
       #############################
-      
       - name: Terraform Apply
+        working-directory: terraform
         run: |
-          terraform init -backend-config="bucket=devops-tfstate-bucket-karthik" \
-                         -backend-config="key=ec2-project/terraform.tfstate" \
-                         -backend-config="region=ap-south-1"
           terraform plan -out=tfplan -refresh=true
           terraform apply -auto-approve tfplan
-
 
       #############################
       # 8. Capture Public IP output
@@ -112,12 +112,8 @@ jobs:
         working-directory: ansible
         run: |
           echo "Using PUBLIC_IP=$PUBLIC_IP"
-
-          # Create correct inventory file
           echo "[web]" > inventory.ini
           echo "$PUBLIC_IP ansible_user=ubuntu ansible_ssh_private_key_file=$(pwd)/keys/id_rsa" >> inventory.ini
-
           echo "---- INVENTORY CONTENT -----"
           cat inventory.ini
-
-          ansible-playbook -i inventory.ini playbook.yml --ssh-extra-args="-o StrictHostKeyChecking=no"
+          ansible-playbook -i inventory.ini playbook.yml
