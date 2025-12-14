@@ -70,9 +70,15 @@ jobs:
       #############################
       # 7. Terraform Apply
       #############################
+      
       - name: Terraform Apply
-        working-directory: terraform
-        run: terraform apply -auto-approve
+        run: |
+          terraform init -backend-config="bucket=devops-tfstate-bucket-karthik" \
+                         -backend-config="key=ec2-project/terraform.tfstate" \
+                         -backend-config="region=ap-south-1"
+          terraform plan -out=tfplan -refresh=true
+          terraform apply -auto-approve tfplan
+
 
       #############################
       # 8. Capture Public IP output
